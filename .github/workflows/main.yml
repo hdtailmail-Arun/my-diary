@@ -1,0 +1,161 @@
+.github/workflows/build.yml
+name: Build APK
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm install
+      - run: npx cap add android
+      - run: npx cap sync android
+      - run: chmod +x android/gradlew
+      - run: ./gradlew assembleDebug<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My Diary</title>
+<style>
+:root{--bg:#faf7f2;--card:#fff;--tx:#2b2620;--mu:#8a8277;--ac:#d9622b;--ac2:#fbe6da;--bd:#eadfd2;--ok:#4a9d6b}
+@media(prefers-color-scheme:dark){:root{--bg:#1c1a17;--card:#2a2723;--tx:#f1ebe3;--mu:#a1988b;--ac:#f08a57;--ac2:#3a2b22;--bd:#3a3631;--ok:#6cc08a}}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,sans-serif;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+header{padding:16px 18px 8px;display:flex;justify-content:space-between;align-items:center}
+header h1{margin:0;font:700 24px Georgia,serif}
+header small{color:var(--mu)}
+main{flex:1;overflow-y:auto;padding:8px 16px 16px}
+.add{display:flex;gap:8px;margin-bottom:12px}.add.col{flex-direction:column}
+input,textarea{width:100%;padding:12px;border:1px solid var(--bd);border-radius:12px;background:var(--card);color:var(--tx);font:inherit}
+textarea{resize:vertical;min-height:80px}
+button{border:0;border-radius:12px;padding:12px 16px;background:var(--ac);color:#fff;font:600 15px system-ui;cursor:pointer}
+button.ghost{background:var(--ac2);color:var(--ac)}
+button.x{background:none;color:var(--mu);padding:6px 10px;font-size:18px}
+.item{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:10px;display:flex;gap:10px;align-items:flex-start}
+.item .b{flex:1;min-width:0;word-wrap:break-word}
+.item.done .b{text-decoration:line-through;color:var(--mu)}
+.chk{width:22px;height:22px;margin-top:2px;accent-color:var(--ok)}
+.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--ac2);color:var(--ac);margin-bottom:4px}
+.d{font-size:12px;color:var(--mu);margin-top:4px}
+.url{color:var(--ac);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.empty{text-align:center;color:var(--mu);padding:40px 0}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
+.box p{margin:0 0 10px;color:var(--mu);font-size:14px}
+nav{display:flex;border-top:1px solid var(--bd);background:var(--card)}
+nav button{flex:1;background:none;color:var(--mu);border-radius:0;padding:10px 4px;font-size:12px}
+nav button.on{color:var(--ac)}
+nav span{display:block;font-size:20px}
+</style></head><body>
+<header><div><h1 id="t">My Diary</h1><small id="dt"></small></div></header>
+<main id="m"></main>
+<nav id="nav"></nav>
+<input type="file" id="f" accept=".json,application/json" style="display:none">
+<script>
+var KEY="mydiary_v1",tab="todo",D={todo:[],idea:[],link:[]};
+try{var s=localStorage.getItem(KEY);if(s)D=Object.assign(D,JSON.parse(s))}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}}
+function esc(x){return String(x).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function fd(t){return new Date(t).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})}
+document.getElementById("dt").textContent=new Date().toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});
+var tabs=[["todo","✅","To-Do"],["idea","💡","Ideas"],["link","🔗","Links"],["set","⚙️","Options"]];
+function nav(){document.getElementById("nav").innerHTML=tabs.map(function(t){return '<button class="'+(tab==t[0]?'on':'')+'" onclick="go(\''+t[0]+'\')"><span>'+t[1]+'</span>'+t[2]+'</button>'}).join("")}
+function go(t){tab=t;render()}
+function g(i){return document.getElementById(i).value}
+function add(){
+  var now=Date.now();
+  if(tab=="todo"){var v=g("a").trim();if(!v)return;D.todo.unshift({id:now,t:v,done:0,at:now})}
+  if(tab=="idea"){var h=g("a").trim(),b=g("b").trim();if(!h&&!b)return;D.idea.unshift({id:now,h:h,b:b,at:now})}
+  if(tab=="link"){var u=g("a").trim(),n=g("b").trim();if(!u)return;if(!/^https?:\/\//i.test(u))u="https://"+u;D.link.unshift({id:now,u:u,n:n,at:now})}
+  save();render()
+}
+function del(k,id){if(!confirm("Delete this?"))return;D[k]=D[k].filter(function(x){return x.id!=id});save();render()}
+function tog(id){D.todo.forEach(function(x){if(x.id==id)x.done=x.done?0:1});save();render()}
+function paste(){
+  try{navigator.clipboard.readText().then(function(t){document.getElementById("a").value=t.trim()}).catch(function(){alert("Long-press the box and choose Paste")})}
+  catch(e){alert("Long-press the box and choose Paste")}
+}
+function yt(u){return /youtube\.com|youtu\.be/i.test(u)}
+async function exportData(){
+  var json=JSON.stringify(D,null,2),name="my-diary-backup-"+new Date().toISOString().slice(0,10)+".json";
+  var P=window.Capacitor&&window.Capacitor.Plugins;
+  if(P&&P.Filesystem&&P.Share){
+    try{
+      var r=await P.Filesystem.writeFile({path:name,data:json,directory:"CACHE",encoding:"utf8"});
+      await P.Share.share({title:"My Diary backup",files:[r.uri]});return;
+    }catch(e){if(e&&/cancel/i.test(e.message||""))return;alert("Export failed: "+(e.message||e))}
+  }
+  var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([json],{type:"application/json"}));a.download=name;a.click();
+}
+function restoreData(){document.getElementById("f").click()}
+document.getElementById("f").addEventListener("change",function(ev){
+  var file=ev.target.files[0];if(!file)return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{
+      var o=JSON.parse(r.result);
+      if(!o||!Array.isArray(o.todo)||!Array.isArray(o.idea)||!Array.isArray(o.link))throw 0;
+      if(!confirm("Replace all current data with this backup?"))return;
+      D={todo:o.todo,idea:o.idea,link:o.link};save();render();alert("Backup restored ✅");
+    }catch(e){alert("This is not a valid diary backup file.")}
+  };
+  r.readAsText(file);ev.target.value="";
+});
+function render(){
+  nav();var h="",m=document.getElementById("m");
+  document.getElementById("t").textContent={todo:"To-Do List",idea:"My Ideas",link:"Saved Links",set:"Options"}[tab];
+  if(tab=="todo"){
+    h+='<div class="add"><input id="a" placeholder="Add a task…" onkeydown="if(event.key==\'Enter\')add()"><button onclick="add()">Add</button></div>';
+    var l=D.todo.slice().sort(function(a,b){return a.done-b.done});
+    h+=l.length?l.map(function(x){return '<div class="item '+(x.done?'done':'')+'"><input type="checkbox" class="chk" '+(x.done?'checked':'')+' onchange="tog('+x.id+')"><div class="b">'+esc(x.t)+'<div class="d">'+fd(x.at)+'</div></div><button class="x" onclick="del(\'todo\','+x.id+')">✕</button></div>'}).join(""):'<div class="empty">No tasks yet 🎉</div>';
+  }
+  if(tab=="idea"){
+    h+='<div class="add col"><input id="a" placeholder="Idea title"><textarea id="b" placeholder="Write your idea…"></textarea><button onclick="add()">Save idea</button></div>';
+    h+=D.idea.length?D.idea.map(function(x){return '<div class="item"><div class="b"><b>'+esc(x.h||"Untitled")+'</b><div>'+esc(x.b).replace(/\n/g,"<br>")+'</div><div class="d">'+fd(x.at)+'</div></div><button class="x" onclick="del(\'idea\','+x.id+')">✕</button></div>'}).join(""):'<div class="empty">No ideas yet 💡</div>';
+  }
+  if(tab=="link"){
+    h+='<div class="add col"><div class="add"><input id="a" placeholder="Paste website / YouTube URL"><button class="ghost" onclick="paste()">Paste</button></div><input id="b" placeholder="Note / title (optional)"><button onclick="add()">Save link</button></div>';
+    h+=D.link.length?D.link.map(function(x){return '<div class="item"><div class="b"><span class="tag">'+(yt(x.u)?'▶ YouTube':'🌐 Website')+'</span><div>'+esc(x.n||"")+'</div><a class="url" href="'+esc(x.u)+'" target="_blank" rel="noopener">'+esc(x.u)+'</a><div class="d">'+fd(x.at)+'</div></div><button class="x" onclick="del(\'link\','+x.id+')">✕</button></div>'}).join(""):'<div class="empty">No links saved yet 🔗</div>';
+  }
+  if(tab=="set"){
+    h+='<div class="box"><b>Backup</b><p>Save all tasks, ideas and links to a file. Send it to Google Drive, WhatsApp, email, etc.</p><button onclick="exportData()">Export backup</button></div>';
+    h+='<div class="box"><b>Restore</b><p>Pick a backup file to bring your data back (replaces current data).</p><button class="ghost" onclick="restoreData()">Restore from file</button></div>';
+    h+='<div class="box"><p>'+D.todo.length+' tasks · '+D.idea.length+' ideas · '+D.link.length+' links</p></div>';
+  }
+  m.innerHTML=h;
+}
+render();
+</script></body></html>
+
+        working-directory: androidnode_modules
+android
+
+      - uses: actions/upload-artifact@v4
+        with:{
+  "appId": "com.mydiary.app",
+  "appName": "My Diary",
+  "webDir": "www"
+}
+
+          name: my-diary-apk
+          path: android/app/build/outputs/apk/{
+  "name": "my-diary",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/cli": "^6.1.0",
+    "@capacitor/core": "^6.1.0",
+    "@capacitor/filesystem": "^6.0.0",
+    "@capacitor/share": "^6.0.0"
+  }
+}
+debug/app-debug.apk
